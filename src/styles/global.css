@@ -31,7 +31,7 @@
   --st-umim: #2f7d4f;
 
   --serif: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
-  --sans: 'Instrument Sans Variable', 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Schibsted Grotesk Variable', 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --gutter: clamp(16px, 4vw, 48px);
   --maxw: 1240px;

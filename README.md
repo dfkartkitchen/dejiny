@@ -3,7 +3,7 @@
 Vzdělávací web pro studenty, kteří se připravují na profilovou maturitu z Dějin výtvarné kultury. Vytvořilo [DFK Studio](https://dfkstudio.cz).
 Připravuje na profilovou maturitu z Dějin výtvarné kultury: 30 otázek, časová osa, kartičky, mini kvízy, režim zkoušení a režim projektoru. Funguje i offline (PWA).
 
-**Stack:** Astro 5 (statický výstup) · písma Fraunces + Instrument Sans · vanilla JS · GSAP + ScrollTrigger · Lenis · sharp · Workbox (@vite-pwa/astro)
+**Stack:** Astro 5 (statický výstup) · písma Fraunces + Schibsted Grotesk · vanilla JS · GSAP + ScrollTrigger · Lenis · sharp · Workbox (@vite-pwa/astro)
 
 ---
 
