@@ -16,8 +16,6 @@ export default defineConfig({
   integrations: [
     AstroPWA({
       registerType: 'autoUpdate',
-      // odkazy mají tvar /otazka/x/ – service worker je tak musí najít i offline
-      experimental: { directoryAndTrailingSlashHandler: true },
       injectRegister: false, // registrace je v src/scripts/app.js
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
@@ -41,13 +39,22 @@ export default defineConfig({
         // nová verze webu převezme otevřené stránky hned (žádné „staré písmo“ z cache)
         skipWaiting: true,
         clientsClaim: true,
-        // všechny stránky, styly, skripty, písma a obrázky v AVIF (640 + 1280 px) → učení bez signálu
-        globPatterns: ['**/*.{html,css,js,svg,woff2,png}', 'img/*-{640,1280}.avif'],
+        // předem uložit styly, skripty, písma, ikony a obrázky (AVIF 640 + 1280 px).
+        // Stránky (HTML) se NEukládají předem – načítají se vždy čerstvé ze sítě (viz runtimeCaching níže),
+        // takže po nasazení nové verze nikdo neuvidí starou podobu webu.
+        globPatterns: ['**/*.{css,js,svg,woff2,png}', 'img/*-{640,1280}.avif'],
         globIgnores: ['**/node_modules/**', 'icons/icon-maskable-512.png'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: null,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            // stránky: vždy nejdřív ze sítě, uložená kopie jen bez internetu (offline učení)
+            urlPattern: ({ request, url }) =>
+              request.mode === 'navigate' || (url.origin === self.location.origin && !/\.[a-z0-9]+$/i.test(url.pathname)),
+            handler: 'NetworkFirst',
+            options: { cacheName: 'stranky', networkTimeoutSeconds: 4, expiration: { maxEntries: 120 } },
+          },
           {
             // ostatní velikosti / formáty obrázků se uloží při prvním zobrazení
             urlPattern: ({ url }) => url.pathname.startsWith('/img/'),

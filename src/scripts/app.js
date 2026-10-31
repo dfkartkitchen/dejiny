@@ -194,6 +194,18 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).then((reg) => {
       reg.update().catch(() => {});
       document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && reg.update().catch(() => {}));
+      // offline: jednou denně na pozadí uložit všechny stránky (přes service worker do cache „stranky“)
+      navigator.serviceWorker.ready.then(() => {
+        if (!navigator.onLine || navigator.connection?.saveData) return;
+        const day = new Date().toISOString().slice(0, 10);
+        if (store.get('dvk-offline-den') === day) return;
+        const list = JSON.parse(document.getElementById('dvk-stranky')?.textContent || '[]');
+        const idle = window.requestIdleCallback || ((f) => setTimeout(f, 2000));
+        idle(async () => {
+          for (const u of list) { try { await fetch(u, { credentials: 'same-origin' }); } catch { return; } }
+          store.set('dvk-offline-den', day);
+        });
+      });
     }).catch(() => {});
   });
 }

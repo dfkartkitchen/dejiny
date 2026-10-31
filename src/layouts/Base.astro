@@ -3,7 +3,7 @@ import '@fontsource/gloock/400.css';
 import '@fontsource-variable/fraunces/opsz.css';
 import '@fontsource-variable/schibsted-grotesk';
 import '../styles/global.css';
-import { url, otazky } from '../lib/data.js';
+import { url, otazky, otazkaUrl } from '../lib/data.js';
 import LogoDfk from '../components/LogoDfk.astro';
 
 const {
@@ -85,6 +85,7 @@ const og = new URL(url(ogImage), Astro.site);
         </button>
       </div>
     </header>
+    <script type="application/json" id="dvk-stranky" set:html={JSON.stringify([url('/'), url('/prehled/'), url('/karticky/'), url('/zkouseni/'), ...otazky.map((o) => otazkaUrl(o)), ...otazky.map((o) => url(`/kviz/${o.slug}/`))])}></script>
     <main id="obsah">
       <slot />
     </main>
