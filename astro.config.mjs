@@ -38,6 +38,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // nová verze webu převezme otevřené stránky hned (žádné „staré písmo“ z cache)
+        skipWaiting: true,
+        clientsClaim: true,
         // všechny stránky, styly, skripty, písma a obrázky v AVIF (640 + 1280 px) → učení bez signálu
         globPatterns: ['**/*.{html,css,js,svg,woff2,png}', 'img/*-{640,1280}.avif'],
         globIgnores: ['**/node_modules/**', 'icons/icon-maskable-512.png'],
