@@ -31,13 +31,13 @@
   --st-umim: #2f7d4f;
 
   --serif: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
-  --sans: 'Source Sans 3 Variable', 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Instrument Sans Variable', 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --gutter: clamp(16px, 4vw, 48px);
   --maxw: 1240px;
   --radius: 2px;
   --ease: cubic-bezier(0.22, 0.61, 0.24, 1);
-  --fs-base: 1.125rem;
+  --fs-base: 1.0625rem;
 
   color-scheme: light;
   transition: --accent 1.2s var(--ease);
