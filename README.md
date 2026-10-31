@@ -1,9 +1,9 @@
 # Dějiny výtvarné kultury – maturitní web 2026/27
 
-Vzdělávací web pro studenty Moravské střední školy Olomouc (Grafický design, Scénická a výstavní tvorba).
+Vzdělávací web pro studenty, kteří se připravují na profilovou maturitu z Dějin výtvarné kultury. Vytvořilo [DFK Studio](https://dfkstudio.cz).
 Připravuje na profilovou maturitu z Dějin výtvarné kultury: 30 otázek, časová osa, kartičky, mini kvízy, režim zkoušení a režim projektoru. Funguje i offline (PWA).
 
-**Stack:** Astro 5 (statický výstup) · vanilla JS · GSAP + ScrollTrigger · Lenis · sharp · Workbox (@vite-pwa/astro)
+**Stack:** Astro 5 (statický výstup) · písma Fraunces + Source Sans 3 · vanilla JS · GSAP + ScrollTrigger · Lenis · sharp · Workbox (@vite-pwa/astro)
 
 ---
 
@@ -44,7 +44,7 @@ První build trvá několik minut (převod 30 obrázků do AVIF). Další buildy
 2. Nastavení se načte z `vercel.json`. Potvrď **Deploy**.
 
 ### Vlastní doména
-Nastav proměnnou prostředí `SITE_URL` (např. `https://dejiny.mss-olomouc.cz`). Používá se pro kanonické adresy a odkazy na náhledové obrázky při sdílení.
+Nastav proměnnou prostředí `SITE_URL` (např. `https://dejiny.dfkstudio.cz`). Používá se pro kanonické adresy a odkazy na náhledové obrázky při sdílení.
 
 ## Struktura projektu
 

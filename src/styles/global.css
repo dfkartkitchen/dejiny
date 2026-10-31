@@ -31,13 +31,13 @@
   --st-umim: #2f7d4f;
 
   --serif: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
-  --sans: 'Manrope Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Source Sans 3 Variable', 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --gutter: clamp(16px, 4vw, 48px);
   --maxw: 1240px;
   --radius: 2px;
   --ease: cubic-bezier(0.22, 0.61, 0.24, 1);
-  --fs-base: 1.0625rem;
+  --fs-base: 1.125rem;
 
   color-scheme: light;
   transition: --accent 1.2s var(--ease);
@@ -190,12 +190,17 @@ kbd { font-family: var(--sans); font-size: 0.8em; border: 1px solid var(--line-s
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
   border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; }
-.brand-mark {
-  font-family: var(--serif); font-size: 0.85rem; letter-spacing: 0.08em;
-  border: 1px solid var(--ink); padding: 3px 6px; line-height: 1;
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; min-width: 0; }
+.dfk-badge {
+  flex: none; display: grid; place-items: center; width: 52px; height: 40px;
+  background: #1d1a16; color: #fff; border-radius: 3px; transition: background 0.4s var(--ease);
 }
-.brand-text { font-family: var(--serif); font-size: 1.05rem; }
+.dfk-badge:hover { background: var(--accent); }
+.dfk-badge .dfk-logo { width: 38px; height: auto; fill: currentColor; }
+.brand-home { text-decoration: none; min-width: 0; }
+.brand-text, .brand-short { font-family: var(--serif); font-size: 1.08rem; white-space: nowrap; }
+.brand-short { display: none; }
+@media (max-width: 520px) { .brand-text { display: none; } .brand-short { display: inline; } }
 .topnav { display: none; gap: 28px; }
 .topnav a { text-decoration: none; font-size: 0.9rem; font-weight: 600; color: var(--ink-2); }
 .topnav a:hover { color: var(--accent); }
@@ -203,7 +208,6 @@ kbd { font-family: var(--sans); font-size: 0.8em; border: 1px solid var(--line-s
 .hotovo { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .hotovo-bar { width: 54px; height: 4px; background: var(--line); overflow: hidden; }
 .hotovo-bar span { display: block; height: 100%; width: var(--p, 0%); background: var(--st-umim); transition: width 0.8s var(--ease); }
-@media (max-width: 520px) { .brand-text { display: none; } }
 @media (min-width: 820px) { .topnav { display: flex; } .brand { margin-right: 0; } .topnav { margin-inline: auto; } }
 
 /* --- obrázky ----------------------------------------------------------- */
@@ -472,9 +476,17 @@ kbd { font-family: var(--sans); font-size: 0.8em; border: 1px solid var(--line-s
 .empty { padding: 48px 0; text-align: center; color: var(--muted); }
 
 /* --- patička ----------------------------------------------------------- */
-.footer { border-top: 1px solid var(--line); padding: 40px 0 120px; color: var(--muted); font-size: 0.9rem; }
-.footer-inner { width: min(100% - 2 * var(--gutter), var(--maxw)); margin-inline: auto; display: grid; gap: 10px; max-width: 70ch; margin-left: max(var(--gutter), calc((100% - var(--maxw)) / 2)); }
-.footer p { margin: 0; }
+.footer { border-top: 1px solid var(--line); padding: 40px 0 0; color: var(--muted); font-size: 0.95rem; }
+.footer-inner { width: min(100% - 2 * var(--gutter), var(--maxw)); margin-inline: auto; display: grid; gap: 10px; padding-bottom: 36px; }
+.footer p { margin: 0; max-width: 70ch; }
+.credit { display: block; background: #1d1a16; border-top: 1px solid var(--line); color: #f4efe6; text-decoration: none; padding-bottom: max(96px, env(safe-area-inset-bottom)); }
+.credit-inner { width: min(100% - 2 * var(--gutter), var(--maxw)); margin-inline: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; padding-top: 32px; }
+.credit-logo { width: 112px; height: auto; fill: currentColor; flex: none; }
+.credit-text { font-size: 1.1rem; display: grid; gap: 4px; }
+.credit-text b { font-weight: 700; letter-spacing: 0.06em; color: #fff; }
+.credit-url { font-size: 0.85rem; color: rgb(244 239 230 / 0.65); transition: color 0.3s var(--ease); }
+.credit:hover .credit-url { color: #fff; text-decoration: underline; text-underline-offset: 0.2em; }
+@media (min-width: 1100px) { .credit { padding-bottom: 36px; } }
 .footer-keys { display: none; }
 @media (hover: hover) { .footer-keys { display: block; } }
 

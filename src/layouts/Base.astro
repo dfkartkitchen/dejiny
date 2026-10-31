@@ -1,8 +1,9 @@
 ---
 import '@fontsource-variable/fraunces/opsz.css';
-import '@fontsource-variable/manrope';
+import '@fontsource-variable/source-sans-3';
 import '../styles/global.css';
 import { url, otazky } from '../lib/data.js';
+import LogoDfk from '../components/LogoDfk.astro';
 
 const {
   title,
@@ -55,10 +56,15 @@ const og = new URL(url(ogImage), Astro.site);
     <a class="skip" href="#obsah">Přeskočit na obsah</a>
     <div class="scroll-progress" aria-hidden="true"><span></span></div>
     <header class="topbar">
-      <a class="brand" href={url('/')} aria-label="Dějiny výtvarné kultury – úvodní stránka">
-        <span class="brand-mark" aria-hidden="true">DVK</span>
-        <span class="brand-text">Dějiny výtvarné kultury</span>
-      </a>
+      <div class="brand">
+        <a class="dfk-badge" href="https://dfkstudio.cz" target="_blank" rel="noopener" aria-label="DFK Studio – dfkstudio.cz (otevře se v novém okně)">
+          <LogoDfk variant="mark" />
+        </a>
+        <a class="brand-home" href={url('/')} aria-label="Dějiny výtvarné kultury – úvodní stránka">
+          <span class="brand-text">Dějiny výtvarné kultury</span>
+          <span class="brand-short" aria-hidden="true">Dějiny umění</span>
+        </a>
+      </div>
       <nav class="topnav" aria-label="Hlavní navigace">
         <a href={url('/#osa')}>Osa</a>
         <a href={url('/prehled/')}>Přehled</a>
@@ -83,10 +89,16 @@ const og = new URL(url(ogImage), Astro.site);
     </main>
     <footer class="footer">
       <div class="footer-inner">
-        <p class="eyebrow">Moravská střední škola Olomouc · Grafický design · Scénická a výstavní tvorba</p>
-        <p>Profilová maturitní zkouška z Dějin výtvarné kultury, školní rok 2026/27. Text je zpracovaný z obecných znalostí dějin umění; u přesných dat doporučujeme kontrolu v učebnici.</p>
+        <p class="eyebrow">Profilová maturita · Dějiny výtvarné kultury · 2026/27</p>
+        <p>Text je zpracovaný z obecných znalostí dějin umění; u přesných dat doporučujeme kontrolu v učebnici.</p>
         <p class="footer-keys"><kbd>←</kbd> <kbd>→</kbd> předchozí / další otázka · <kbd>P</kbd> režim projektoru</p>
       </div>
+      <a class="credit" href="https://dfkstudio.cz" target="_blank" rel="noopener">
+        <span class="credit-inner">
+          <LogoDfk variant="full" class="credit-logo" />
+          <span class="credit-text"><span class="credit-line">Tento web vytvořilo <b>DFK STUDIO</b>.</span><span class="credit-url">dfkstudio.cz ↗</span></span>
+        </span>
+      </a>
     </footer>
     <script>
       import '../scripts/app.js';
