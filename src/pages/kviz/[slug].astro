@@ -1,0 +1,127 @@
+---
+import Base from '../../layouts/Base.astro';
+import { otazky, epochy, otazkaUrl, url, katCislo } from '../../lib/data.js';
+import { kvizPool } from '../../lib/studium.js';
+
+export function getStaticPaths() {
+  return otazky.map((o, i) => ({ params: { slug: o.slug }, props: { o, next: otazky[i + 1] ?? otazky[0] } }));
+}
+const { o, next } = Astro.props;
+const e = epochy.find((x) => x.id === o.obdobi);
+const pool = kvizPool(o, otazky);
+---
+<Base title={`Kvíz: ${o.kratkyNazev}`} description={`Mini kvíz k maturitní otázce ${o.cislo}. ${o.nazev}.`} ogImage={`/img/${o.id}-og.jpg`} epocha={o.obdobi} bodyClass="page-kviz">
+  <div class="wrap kviz" data-kviz>
+    <header class="page-head">
+      <p class="eyebrow"><span class="acc">Kat. č. {katCislo(o.cislo)}</span> · {e.nazev} · mini kvíz</p>
+      <h1>{o.kratkyNazev}</h1>
+    </header>
+
+    <div class="fc-meta" aria-live="polite"><span data-k-pos>Otázka 1 / 5</span><span class="fc-meter"><span data-k-meter></span></span><span data-k-score>0 bodů</span></div>
+
+    <section class="kviz-card" data-k-card>
+      <p class="eyebrow" data-k-typ></p>
+      <h2 data-k-q></h2>
+      <ol class="options" data-k-opts></ol>
+      <p class="kviz-feedback" data-k-fb role="status" hidden></p>
+      <button class="btn btn-primary" type="button" data-k-next hidden>Další otázka →</button>
+    </section>
+
+    <section class="kviz-card kviz-end" data-k-end hidden>
+      <p class="eyebrow">Výsledek</p>
+      <p class="kviz-score"><b data-k-final>0</b> / <span data-k-total>5</span></p>
+      <p data-k-msg></p>
+      <div class="study-links">
+        <button class="btn btn-primary" type="button" data-k-again>Zkusit znovu ↻</button>
+        <a class="btn" href={otazkaUrl(o)}>Zpět na otázku</a>
+        <a class="btn" href={url(`/kviz/${next.slug}/`)}>Kvíz k otázce {next.cislo} →</a>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script id="k-data" type="application/json" set:html={JSON.stringify(pool)}></script>
+
+<script>
+  import { gsap } from 'gsap';
+  import { calm } from '../../scripts/app.js';
+
+  const POOL = JSON.parse(document.getElementById('k-data').textContent);
+  const TYP = { autor: 'Kdo to vytvořil', sloh: 'Zařaď do slohu', sekce: 'Zařaď do oboru' };
+  const $ = (s) => document.querySelector(s);
+  const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  let qs = [], i = 0, score = 0;
+
+  function pick() {
+    // mix typů: střídá autor / sloh / sekce, max. 5 otázek
+    const byTyp = {};
+    shuffle(POOL).forEach((q) => (byTyp[q.typ] ??= []).push(q));
+    const out = [];
+    const order = ['autor', 'sloh', 'sekce'];
+    while (out.length < 5 && order.some((t) => byTyp[t]?.length)) for (const t of order) if (byTyp[t]?.length && out.length < 5) out.push(byTyp[t].shift());
+    return out.map((q) => ({ ...q, moznosti: shuffle([q.spravne, ...shuffle(q.spatne).slice(0, 3)]) }));
+  }
+
+  function render() {
+    const q = qs[i];
+    $('[data-k-pos]').textContent = `Otázka ${i + 1} / ${qs.length}`;
+    $('[data-k-meter]').style.width = `${(i / qs.length) * 100}%`;
+    $('[data-k-score]').textContent = `${score} ${score === 1 ? 'bod' : score >= 2 && score <= 4 ? 'body' : 'bodů'}`;
+    $('[data-k-typ]').textContent = TYP[q.typ];
+    $('[data-k-q]').textContent = q.otazka;
+    $('[data-k-fb]').hidden = true;
+    $('[data-k-next]').hidden = true;
+    const ol = $('[data-k-opts]');
+    ol.innerHTML = '';
+    q.moznosti.forEach((m, n) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'option';
+      b.innerHTML = `<span class="opt-key">${'ABCD'[n]}</span><span></span>`;
+      b.lastChild.textContent = m;
+      b.addEventListener('click', () => choose(b, m));
+      li.append(b); ol.append(li);
+    });
+    if (!calm) gsap.from('[data-k-card] > *', { opacity: 0, y: 16, duration: 0.5, stagger: 0.05, ease: 'power2.out' });
+    ol.querySelector('button')?.focus({ preventScroll: true });
+  }
+
+  function choose(btn, m) {
+    const q = qs[i];
+    const ok = m === q.spravne;
+    if (ok) score++;
+    document.querySelectorAll('.option').forEach((b) => {
+      b.disabled = true;
+      if (b.lastChild.textContent === q.spravne) b.classList.add('correct');
+    });
+    if (!ok) btn.classList.add('wrong');
+    const fb = $('[data-k-fb]');
+    fb.hidden = false;
+    fb.className = `kviz-feedback ${ok ? 'ok' : 'ko'}`;
+    fb.textContent = (ok ? 'Správně. ' : 'Ne tak docela. ') + q.vysvetleni;
+    const nb = $('[data-k-next]');
+    nb.hidden = false;
+    nb.textContent = i + 1 < qs.length ? 'Další otázka →' : 'Zobrazit výsledek';
+    nb.focus({ preventScroll: true });
+  }
+
+  function end() {
+    $('[data-k-card]').hidden = true;
+    $('[data-k-end]').hidden = false;
+    $('[data-k-final]').textContent = String(score);
+    $('[data-k-total]').textContent = String(qs.length);
+    $('[data-k-meter]').style.width = '100%';
+    const r = score / qs.length;
+    $('[data-k-msg]').textContent = r === 1 ? 'Výborně, tuhle otázku máš v malíčku.' : r >= 0.6 ? 'Dobré. Projdi si ještě štítky s příklady.' : 'Vrať se k textu otázky a zkus to znovu.';
+  }
+
+  $('[data-k-next]').addEventListener('click', () => { i++; i < qs.length ? render() : end(); });
+  $('[data-k-again]').addEventListener('click', start);
+  addEventListener('keydown', (e) => {
+    const n = 'abcd'.indexOf(e.key.toLowerCase());
+    const opts = document.querySelectorAll('.option:not(:disabled)');
+    if (n >= 0 && opts[n]) opts[n].click();
+  });
+  function start() { qs = pick(); i = 0; score = 0; $('[data-k-card]').hidden = false; $('[data-k-end]').hidden = true; render(); }
+  start();
+</script>

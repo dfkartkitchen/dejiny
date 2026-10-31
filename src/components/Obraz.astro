@@ -1,0 +1,18 @@
+---
+import { srcset, url, imgMeta } from '../lib/data.js';
+const { otazka, sizes = '100vw', eager = false, class: cls = '', alt, lqip = true, priority } = Astro.props;
+const m = imgMeta(otazka);
+const id = otazka.id;
+---
+<picture class={`obraz ${cls}`} style={lqip && m.lqip ? `background-image:url(${m.lqip})` : undefined}>
+  <source type="image/avif" srcset={srcset(id, 'avif')} sizes={sizes} />
+  <source type="image/webp" srcset={srcset(id, 'webp')} sizes={sizes} />
+  <img
+    src={url(`/img/${id}-1280.webp`)}
+    width="1920" height="1080"
+    alt={alt ?? otazka.obrazek.alt}
+    loading={eager ? 'eager' : 'lazy'}
+    fetchpriority={priority ?? (eager ? 'high' : 'auto')}
+    decoding="async"
+  />
+</picture>

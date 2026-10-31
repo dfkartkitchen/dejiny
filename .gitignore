@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.astro/
+preview/
+nahledy/
+# generované při buildu (obrázky se stahují z obrazky.json)
+public/img/
+public/video/
+src/data/obrazky-meta.json
+src/data/videa.json
+podklady/obrazky/
+.DS_Store

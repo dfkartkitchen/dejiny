@@ -1,0 +1,105 @@
+{
+  "poznamka": "Varianta A (levná): Kling 3.0 std, bez zvuku, 16:9. Pro top kvalitu vygenerovat znovu se stejnými vstupy a mode=pro, duration=5.",
+  "videa": [
+    {
+      "soubor": "epocha-1.mp4",
+      "epocha": "Pravěk a starověk",
+      "start_image": "q01",
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 3,
+      "job_id": "407174e0-5daf-4f44-93bf-e8c68c75ed19",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170049_407174e0-5daf-4f44-93bf-e8c68c75ed19.mp4",
+      "rozliseni": "1280x720"
+    },
+    {
+      "soubor": "epocha-2.mp4",
+      "epocha": "Středověk",
+      "start_image": "q07",
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 3,
+      "job_id": "03868c9c-d3be-4a50-9650-b8d3772e9957",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170048_03868c9c-d3be-4a50-9650-b8d3772e9957.mp4",
+      "rozliseni": "1280x720"
+    },
+    {
+      "soubor": "epocha-3.mp4",
+      "epocha": "Renesance",
+      "start_image": "q09",
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 3,
+      "job_id": "1428ab68-7e77-416e-a761-0c7a73feca82",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170048_1428ab68-7e77-416e-a761-0c7a73feca82.mp4",
+      "rozliseni": "1280x720"
+    },
+    {
+      "soubor": "epocha-4.mp4",
+      "epocha": "Baroko",
+      "start_image": "q14",
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 3,
+      "job_id": "baf92850-81f9-436d-aa39-72e3981cf75c",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170038_baf92850-81f9-436d-aa39-72e3981cf75c.mp4",
+      "rozliseni": "1280x720"
+    },
+    {
+      "soubor": "epocha-5.mp4",
+      "epocha": "19. století",
+      "start_image": "q20",
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 3,
+      "job_id": "ef52d89c-a299-4edd-9889-ebe53f52177c",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170038_ef52d89c-a299-4edd-9889-ebe53f52177c.mp4",
+      "rozliseni": "1280x720"
+    },
+    {
+      "soubor": "epocha-6.mp4",
+      "epocha": "20. století a současnost",
+      "start_image": "q30",
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 3,
+      "job_id": "fdfb54b9-2e4f-45ec-abc1-d86f196f712e",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170038_fdfb54b9-2e4f-45ec-abc1-d86f196f712e.mp4",
+      "rozliseni": "1280x720"
+    },
+    {
+      "soubor": "listek.mp4",
+      "epocha": null,
+      "start_image": null,
+      "model": "kling3_0",
+      "mode": "std",
+      "duration": 4,
+      "job_id": "6e8b7e51-5ce6-414f-8a06-ff42794f9d40",
+      "rozliseni": "1280x720",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_170038_6e8b7e51-5ce6-414f-8a06-ff42794f9d40.mp4"
+    },
+    {
+      "soubor": "prezentace-webu.mp4",
+      "epocha": null,
+      "start_image": null,
+      "reference": [
+        "q01",
+        "q07",
+        "q09",
+        "q14",
+        "q16",
+        "q20",
+        "q30"
+      ],
+      "model": "kling4_0",
+      "mode": "reference-to-video",
+      "resolution": "1080p",
+      "duration": 25,
+      "job_id": "70864c0b-7187-43aa-9217-ec8bf362d01e",
+      "prompt": "viz podklady/higgsfield-video-prompty.md, sekce 8",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_38oHfr6Bs27Fg5E0TBYMYaaddIb/hf_20261031_171019_70864c0b-7187-43aa-9217-ec8bf362d01e.mp4",
+      "rozliseni": "1920x1080"
+    }
+  ],
+  "prompty": "viz podklady/higgsfield-video-prompty.md (sekce 2 pro otázky 01, 07, 09, 14, 20, 30 a sekce 4 pro lístek)"
+}

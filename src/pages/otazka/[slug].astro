@@ -1,0 +1,130 @@
+---
+import Base from '../../layouts/Base.astro';
+import Obraz from '../../components/Obraz.astro';
+import Segmenty from '../../components/Segmenty.astro';
+import { otazky, url, otazkaUrl, katCislo, epochaOf, plain, fmtMin } from '../../lib/data.js';
+
+export function getStaticPaths() {
+  return otazky.map((o, i) => ({
+    params: { slug: o.slug },
+    props: { o, prev: otazky[i - 1] ?? null, next: otazky[i + 1] ?? null },
+  }));
+}
+const { o, prev, next } = Astro.props;
+const e = epochaOf(o);
+const kat = katCislo(o.cislo);
+const popis = plain(o.uvod).slice(0, 155).replace(/\s\S*$/, '') + '…';
+const minuta = Math.min(100, Math.round((o.minutCteni / 2) * 100));
+---
+<Base title={`${o.cislo}. ${o.nazev}`} description={popis} ogImage={`/img/${o.id}-og.jpg`} epocha={o.obdobi} bodyClass="page-otazka">
+  <article data-otazka={o.id} data-prev={prev ? otazkaUrl(prev) : ''} data-next={next ? otazkaUrl(next) : ''}>
+    <header class="q-hero">
+      <div class="q-hero-media" data-parallax>
+        <div class="kb">
+          <Obraz otazka={o} eager sizes="100vw" />
+        </div>
+      </div>
+      <div class="wrap q-hero-inner">
+        <p class="eyebrow"><span class="acc">Kat. č. {kat}</span> · {e.nazev} · {e.obdobi}</p>
+        <p class="q-num" aria-hidden="true">{kat}</p>
+        <h1>{o.nazev}</h1>
+        <div class="q-meta">
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>{fmtMin(o.minutCteni)} min čtení</span>
+          <span>{o.sekce.length} sekcí</span>
+          <span>{o.priklady.length} děl k zapamatování</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="perex wrap" aria-label="O čem to je">
+      <div class="perex-grid">
+        <div class="time-box" data-reveal>
+          <span class="eyebrow">Cíl: 2 minuty</span>
+          <b>{fmtMin(o.minutCteni)}<small style="font-size:.4em"> min</small></b>
+          <div class="time-meter" role="img" aria-label={`Čtení zabere ${fmtMin(o.minutCteni)} minuty z cílových 2 minut`}><span style={`width:${minuta}%`}></span></div>
+        </div>
+        <div data-reveal>
+          <p class="eyebrow panel-label">O čem to je</p>
+          <p><Segmenty segs={o.uvod} /></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sekce wrap" aria-label="Tematické sekce">
+      <div class="sekce-grid">
+        {o.sekce.map((s, i) => (
+          <section class="karta" data-reveal style={`transition-delay:${(i % 3) * 90}ms`} id={`sekce-${i + 1}`}>
+            {s.skupina && <p class="eyebrow skupina">{s.skupina}</p>}
+            <h2>{s.nadpis}</h2>
+            <ul>
+              {s.body.map((b) => <li><Segmenty segs={b} /></li>)}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </section>
+
+    <section class="priklady" aria-labelledby="priklady-title">
+      <div class="wrap">
+        <p class="eyebrow">Kat. č. {kat} · výběr exponátů</p>
+        <h2 id="priklady-title">Příklady k zapamatování</h2>
+        <p class="hint">Klepni na štítek a uvidíš, ke které sekci patří.</p>
+        <ul class="stitky">
+          {o.priklady.map((p, i) => (
+            <li class="stitek" data-reveal style={`transition-delay:${(i % 4) * 70}ms`}>
+              <button type="button" aria-pressed="false" data-flip>
+                <span class="face face-front">
+                  <span class="dilo">{p.text}</span>
+                  <span class="foot"><span>{kat}.{String(i + 1).padStart(2, '0')}</span><i></i></span>
+                </span>
+                <span class="face face-back" aria-hidden="true">
+                  <span class="eyebrow">Patří k sekci</span>
+                  <span class="dilo">{p.sekce ?? e.nazev}</span>
+                  <span class="foot"><span>{e.nazev}</span><i></i></span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section class="studium wrap" aria-label="Postup studia">
+      <div class="studium-grid">
+        <div>
+          <p class="eyebrow panel-label">Jak to umím?</p>
+          <div class="stav-switch" role="group" aria-label="Stav studia otázky" data-stav-switch={o.id}>
+            <button type="button" data-stav="neumim" aria-pressed="false"><span class="stav-dot" data-stav="neumim"></span>Neumím</button>
+            <button type="button" data-stav="opakuji" aria-pressed="false"><span class="stav-dot" data-stav="opakuji"></span>Opakuji</button>
+            <button type="button" data-stav="umim" aria-pressed="false"><span class="stav-dot" data-stav="umim"></span>Umím</button>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow panel-label">Procvičit</p>
+          <div class="study-links">
+            <a class="btn" href={url(`/kviz/${o.slug}/`)}>Mini kvíz <span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn" href={url(`/karticky/?otazka=${o.cislo}`)}>Kartičky <span class="arr" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="q-nav" aria-label="Navigace mezi otázkami">
+      {prev ? (
+        <a class="prev" href={otazkaUrl(prev)} rel="prev"><span class="eyebrow">← Předchozí · {katCislo(prev.cislo)}</span><span class="t">{prev.kratkyNazev}</span></a>
+      ) : <span></span>}
+      <a class="home" href={url('/#osa')}><span class="eyebrow">Zpět na osu</span></a>
+      {next ? (
+        <a class="next" href={otazkaUrl(next)} rel="next"><span class="eyebrow">Další · {katCislo(next.cislo)} →</span><span class="t">{next.kratkyNazev}</span></a>
+      ) : <span></span>}
+    </nav>
+  </article>
+
+  <nav class="thumbbar" aria-label="Rychlá navigace">
+    {prev ? <a href={otazkaUrl(prev)} aria-label={`Předchozí otázka: ${prev.kratkyNazev}`}>←</a> : <span style="min-width:48px"></span>}
+    <a href={url('/#osa')} aria-label="Časová osa">Osa</a>
+    <span class="pos">{kat}/30</span>
+    <button type="button" data-scroll-top aria-label="Nahoru">↑</button>
+    {next ? <a href={otazkaUrl(next)} aria-label={`Další otázka: ${next.kratkyNazev}`}>→</a> : <span style="min-width:48px"></span>}
+  </nav>
+</Base>

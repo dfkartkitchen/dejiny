@@ -1,0 +1,4 @@
+---
+const { segs } = Astro.props;
+---
+{segs.map((s) => (s.b ? <strong>{s.t}</strong> : s.t))}

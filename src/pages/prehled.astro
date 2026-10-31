@@ -1,0 +1,85 @@
+---
+import Base from '../layouts/Base.astro';
+import Obraz from '../components/Obraz.astro';
+import { epochy, otazky, otazkaUrl, katCislo, epochaOf, plain } from '../lib/data.js';
+
+const index = otazky.map((o) => ({
+  id: o.id,
+  text: [o.nazev, plain(o.uvod), ...o.sekce.flatMap((s) => [s.skupina ?? '', s.nadpis, ...s.body.map(plain)]), ...o.priklady.map((p) => p.text)].join(' · '),
+}));
+---
+<Base title="Přehled otázek" description="Všech 30 maturitních otázek z Dějin výtvarné kultury s vyhledáváním podle umělců, děl a pojmů." bodyClass="page-prehled">
+  <div class="wrap">
+    <header class="page-head">
+      <p class="eyebrow">Katalog výstavy</p>
+      <h1>Přehled otázek</h1>
+    </header>
+
+    <div class="filters">
+      <label class="sr-only" for="q">Hledat v otázkách</label>
+      <input class="search" id="q" type="search" placeholder="Hledej umělce, dílo nebo pojem – třeba Parléř, kontrapost, Mucha" autocomplete="off" data-search />
+      <div class="chips" role="group" aria-label="Filtr podle epochy">
+        <button class="chip" type="button" aria-pressed="true" data-filter="">Vše</button>
+        {epochy.map((e) => (
+          <button class="chip" type="button" aria-pressed="false" data-filter={e.id} style={`--c:var(--${e.barva})`}><i></i>{e.nazev}</button>
+        ))}
+      </div>
+      <p class="result-count" aria-live="polite" data-count>{otazky.length} otázek</p>
+    </div>
+
+    <ul class="grid" data-grid>
+      {otazky.map((o, i) => {
+        const e = epochaOf(o);
+        return (
+          <li class="card" data-card={o.id} data-epocha={o.obdobi} style={`--c:var(--${e.barva})`}>
+            <a href={otazkaUrl(o)}>
+              <Obraz otazka={o} sizes="(max-width: 640px) 100vw, 380px" alt="" eager={i < 2} />
+              <div class="body">
+                <span class="kat"><span>Kat. č. {katCislo(o.cislo)} · {e.nazev}</span><span class="stav-dot" data-stav-dot={o.id} aria-hidden="true"></span></span>
+                <h2>{o.nazev}</h2>
+                <p class="match" data-match hidden></p>
+              </div>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+    <p class="empty" data-empty hidden>Nic nenalezeno. Zkus jiný tvar slova nebo jen část jména.</p>
+  </div>
+</Base>
+
+<script define:vars={{ index }}>
+  const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const data = index.map((x) => ({ ...x, n: norm(x.text) }));
+  const input = document.querySelector('[data-search]');
+  const chips = [...document.querySelectorAll('[data-filter]')];
+  const count = document.querySelector('[data-count]');
+  const empty = document.querySelector('[data-empty]');
+  let filtr = new URLSearchParams(location.search).get('epocha') || '';
+
+  const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  function snippet(text, n, q) {
+    const i = n.indexOf(q);
+    const a = Math.max(0, i - 40), b = Math.min(text.length, i + q.length + 60);
+    return (a > 0 ? '…' : '') + esc(text.slice(a, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length, b)) + (b < text.length ? '…' : '');
+  }
+  function update() {
+    const q = norm(input.value.trim());
+    let n = 0;
+    for (const d of data) {
+      const card = document.querySelector(`[data-card="${d.id}"]`);
+      const okE = !filtr || card.dataset.epocha === filtr;
+      const okQ = !q || d.n.includes(q);
+      card.hidden = !(okE && okQ);
+      const m = card.querySelector('[data-match]');
+      if (q && okQ) { m.innerHTML = snippet(d.text, d.n, q); m.hidden = false; } else m.hidden = true;
+      if (!card.hidden) n++;
+    }
+    count.textContent = n === 1 ? '1 otázka' : n >= 2 && n <= 4 ? `${n} otázky` : `${n} otázek`;
+    empty.hidden = n > 0;
+    chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.filter === filtr)));
+  }
+  input.addEventListener('input', update);
+  chips.forEach((c) => c.addEventListener('click', () => { filtr = c.dataset.filter; update(); }));
+  update();
+</script>

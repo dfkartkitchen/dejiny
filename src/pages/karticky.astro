@@ -1,0 +1,143 @@
+---
+import Base from '../layouts/Base.astro';
+import { otazky, epochy } from '../lib/data.js';
+import { karticky } from '../lib/studium.js';
+
+const cards = karticky(otazky, epochy);
+---
+<Base title="Kartičky" description={`${cards.length} kartiček k maturitě z Dějin výtvarné kultury: na přední straně jméno nebo dílo, na zadní kontext.`} bodyClass="page-karticky">
+  <div class="wrap fc" data-fc>
+    <header class="page-head">
+      <p class="eyebrow">Opakování</p>
+      <h1>Kartičky</h1>
+      <p class="lead">Na přední straně jméno, dílo nebo pojem, na zadní kontext z otázky. Klepnutím kartičku otočíš.</p>
+    </header>
+
+    <div class="fc-bar">
+      <label class="sr-only" for="fc-vyber">Vyber otázky</label>
+      <select id="fc-vyber" class="select" data-fc-vyber>
+        <option value="">Všechny otázky ({cards.length})</option>
+        {epochy.map((e) => (
+          <optgroup label={e.nazev}>
+            <option value={`e:${e.id}`}>Celá epocha – {e.nazev}</option>
+            {otazky.filter((o) => o.obdobi === e.id).map((o) => (
+              <option value={`o:${o.cislo}`}>{o.cislo}. {o.kratkyNazev}</option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      <label class="check"><input type="checkbox" id="fc-nezname" data-fc-nezname checked /> Jen ty, které ještě neumím</label>
+    </div>
+
+    <div class="fc-meta" aria-live="polite"><span data-fc-pos>0 / 0</span><span class="fc-meter"><span data-fc-meter></span></span><span data-fc-known>umím 0</span></div>
+
+    <div class="fc-stage">
+      <button class="flash" type="button" data-flash aria-pressed="false" aria-label="Otočit kartičku">
+        <span class="face face-front">
+          <span class="eyebrow" data-f-kat></span>
+          <span class="flash-lic" data-f-lic></span>
+          <span class="flash-hint">Klepni pro otočení</span>
+        </span>
+        <span class="face face-back">
+          <span class="eyebrow" data-f-sekce></span>
+          <span class="flash-rub" data-f-rub></span>
+          <span class="flash-kontext" data-f-kontext></span>
+        </span>
+      </button>
+      <div class="fc-empty" data-fc-empty hidden>
+        <p class="flash-lic">Hotovo!</p>
+        <p>V tomhle výběru už všechny kartičky umíš.</p>
+        <button class="btn" type="button" data-fc-reset>Projít výběr znovu od začátku</button>
+      </div>
+    </div>
+
+    <div class="fc-ctrl">
+      <button class="btn fc-no" type="button" data-fc-no>← Ještě ne</button>
+      <button class="btn btn-primary fc-yes" type="button" data-fc-yes>Umím →</button>
+    </div>
+    <p class="fc-keys">Klávesy: <kbd>mezerník</kbd> otočit · <kbd>←</kbd> ještě ne · <kbd>→</kbd> umím</p>
+  </div>
+</Base>
+
+<script id="fc-data" type="application/json" set:html={JSON.stringify(cards)}></script>
+
+<script>
+  import { gsap } from 'gsap';
+  import { store, calm } from '../scripts/app.js';
+
+  const ALL = JSON.parse(document.getElementById('fc-data').textContent);
+  const KEY = 'dvk-karticky';
+  const $ = (s) => document.querySelector(s);
+  const flash = $('[data-flash]');
+  const vyber = $('[data-fc-vyber]');
+  const jenNezname = $('[data-fc-nezname]');
+  let known = new Set(store.get(KEY, []));
+  let deck = [], total = 0, done = 0;
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('otazka')) vyber.value = `o:${params.get('otazka')}`;
+  else if (params.get('epocha')) vyber.value = `e:${params.get('epocha')}`;
+
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  function build() {
+    const v = vyber.value;
+    let sel = ALL;
+    if (v.startsWith('o:')) sel = ALL.filter((c) => c.otazka === Number(v.slice(2)));
+    if (v.startsWith('e:')) sel = ALL.filter((c) => c.obdobi === v.slice(2));
+    total = sel.length;
+    deck = shuffle(sel.filter((c) => !jenNezname.checked || !known.has(c.id)));
+    done = total - deck.length;
+    if (sel[0]) document.documentElement.dataset.epocha = sel[0].obdobi;
+    show();
+  }
+
+  function meta() {
+    $('[data-fc-pos]').textContent = `${Math.min(done + 1, total)} / ${total}`;
+    $('[data-fc-meter]').style.width = `${total ? (done / total) * 100 : 0}%`;
+    $('[data-fc-known]').textContent = `umím ${[...known].filter((id) => ALL.some((c) => c.id === id && (!vyber.value || matches(c)))).length}`;
+  }
+  const matches = (c) => vyber.value.startsWith('o:') ? c.otazka === Number(vyber.value.slice(2)) : c.obdobi === vyber.value.slice(2);
+
+  function show() {
+    meta();
+    const c = deck[0];
+    const empty = !c;
+    $('[data-fc-empty]').hidden = !empty;
+    flash.hidden = empty;
+    document.querySelectorAll('[data-fc-no],[data-fc-yes]').forEach((b) => (b.disabled = empty));
+    if (empty) return;
+    flash.setAttribute('aria-pressed', 'false');
+    document.documentElement.dataset.epocha = c.obdobi;
+    $('[data-f-kat]').textContent = `Kat. č. ${String(c.otazka).padStart(2, '0')} · ${c.epocha}`;
+    $('[data-f-lic]').textContent = c.lic;
+    $('[data-f-sekce]').textContent = c.sekce;
+    $('[data-f-rub]').textContent = c.rub;
+    $('[data-f-kontext]').textContent = `${c.otazka}. ${c.nazev} · ${c.epocha}`;
+    if (!calm) gsap.fromTo(flash, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
+  }
+
+  function answer(ok) {
+    const c = deck.shift();
+    if (!c) return;
+    if (ok) { known.add(c.id); done++; }
+    else { known.delete(c.id); deck.splice(Math.min(deck.length, 3 + Math.floor(Math.random() * 3)), 0, c); }
+    store.set(KEY, [...known]);
+    if (!calm) gsap.to(flash, { x: ok ? 80 : -80, opacity: 0, duration: 0.3, ease: 'power2.in', onComplete: () => { gsap.set(flash, { x: 0 }); show(); } });
+    else show();
+  }
+
+  flash.addEventListener('click', () => flash.setAttribute('aria-pressed', String(flash.getAttribute('aria-pressed') !== 'true')));
+  $('[data-fc-yes]').addEventListener('click', () => answer(true));
+  $('[data-fc-no]').addEventListener('click', () => answer(false));
+  $('[data-fc-reset]').addEventListener('click', () => { jenNezname.checked = false; build(); });
+  vyber.addEventListener('change', build);
+  jenNezname.addEventListener('change', build);
+  addEventListener('keydown', (e) => {
+    if (e.target.closest('select, input')) return;
+    if (e.key === ' ') { e.preventDefault(); flash.click(); }
+    if (e.key === 'ArrowRight') answer(true);
+    if (e.key === 'ArrowLeft') answer(false);
+  });
+  build();
+</script>

@@ -1,0 +1,208 @@
+---
+import Base from '../layouts/Base.astro';
+import { otazky, epochy, otazkaUrl, url, videoUrl } from '../lib/data.js';
+const listek = videoUrl('listek');
+
+const data = otazky.map((o) => ({
+  id: o.id,
+  cislo: o.cislo,
+  nazev: o.nazev,
+  obdobi: o.obdobi,
+  epocha: epochy.find((e) => e.id === o.obdobi).nazev,
+  url: otazkaUrl(o),
+  kviz: url(`/kviz/${o.slug}/`),
+  osnova: o.sekce.map((s) => ({
+    nadpis: s.skupina ? `${s.skupina} · ${s.nadpis}` : s.nadpis,
+    pojmy: [...new Set(s.body.flatMap((b) => b.filter((x) => x.b).map((x) => x.t.replace(/[:\s]+$/, ''))))],
+  })),
+  priklady: o.priklady.map((p) => p.text),
+}));
+---
+<Base title="Režim zkoušení" description="Vylosuj si maturitní otázku jako u zkoušky: 2 minuty na přípravu, 2 minuty na mluvení." bodyClass="page-zkouseni">
+  <div class="wrap zk" data-zk>
+    <header class="page-head zk-head">
+      <p class="eyebrow">Simulace maturity</p>
+      <h1>Režim zkoušení</h1>
+      <p class="lead">Vylosuješ si lístek, máš 2 minuty na přípravu a 2 minuty na mluvení. Osnovu uvidíš, až o ni požádáš.</p>
+    </header>
+
+    <section class="zk-stage" data-stage="start" aria-live="polite">
+      <div class="deck" data-deck aria-hidden="true">
+        {otazky.map((o) => <span class="deck-card" style={`--c:var(--${epochy.find((e) => e.id === o.obdobi).barva})`}><b>{String(o.cislo).padStart(2, '0')}</b></span>)}
+        {listek && <video class="deck-video" data-listek-video src={listek} muted playsinline preload="auto" hidden></video>}
+        <div class="ticket" data-ticket hidden>
+          <span class="eyebrow">Maturitní lístek</span>
+          <b class="ticket-num" data-t-num>00</b>
+          <span class="ticket-title" data-t-title></span>
+          <span class="eyebrow" data-t-epocha></span>
+        </div>
+      </div>
+
+      <div class="zk-start" data-panel="start">
+        <label class="check"><input type="checkbox" id="vynechat-umim" data-skip-known /> Vynechat otázky, které už umím</label>
+        <button class="btn btn-primary btn-big" type="button" data-draw>Vylosovat lístek <span class="arr" aria-hidden="true">→</span></button>
+      </div>
+
+      <div class="zk-run" data-panel="run" hidden>
+        <div class="timer" data-timer>
+          <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54" /><circle class="prog" cx="60" cy="60" r="54" data-ring /></svg>
+          <div class="timer-text">
+            <span class="eyebrow" data-phase>Příprava</span>
+            <b data-time>2:00</b>
+            <span class="phase-steps"><i data-step="1"></i><i data-step="2"></i></span>
+          </div>
+        </div>
+        <div class="timer-ctrl">
+          <button class="btn" type="button" data-pause>Pozastavit</button>
+          <button class="btn" type="button" data-skip>Začít mluvit <span class="arr" aria-hidden="true">→</span></button>
+        </div>
+        <div class="zk-actions">
+          <button class="btn btn-primary" type="button" data-show-osnova aria-expanded="false" aria-controls="osnova">Ukázat osnovu</button>
+          <button class="btn" type="button" data-redraw>Losovat znovu ↻</button>
+        </div>
+        <section class="osnova" id="osnova" data-osnova hidden>
+          <h2 class="eyebrow panel-label">Osnova</h2>
+          <ol data-osnova-list></ol>
+          <p class="eyebrow">Příklady k zapamatování</p>
+          <ul class="chip-list" data-osnova-priklady></ul>
+          <a class="btn" data-full href="#">Otevřít celou otázku <span class="arr" aria-hidden="true">→</span></a>
+        </section>
+        <section class="zk-done" data-done hidden>
+          <p class="eyebrow panel-label">Jak to šlo?</p>
+          <div class="stav-switch" role="group" aria-label="Stav studia otázky" data-stav-switch="">
+            <button type="button" data-stav="neumim" aria-pressed="false"><span class="stav-dot" data-stav="neumim"></span>Neumím</button>
+            <button type="button" data-stav="opakuji" aria-pressed="false"><span class="stav-dot" data-stav="opakuji"></span>Opakuji</button>
+            <button type="button" data-stav="umim" aria-pressed="false"><span class="stav-dot" data-stav="umim"></span>Umím</button>
+          </div>
+          <a class="btn" data-kviz href="#">Mini kvíz k této otázce <span class="arr" aria-hidden="true">→</span></a>
+        </section>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script id="zk-data" type="application/json" set:html={JSON.stringify(data)}></script>
+
+<script>
+  import { gsap } from 'gsap';
+  import { renderStav, store, STAV_KEY, calm } from '../scripts/app.js';
+
+  const DATA = JSON.parse(document.getElementById('zk-data').textContent);
+  const PHASES = [{ name: 'Příprava', sec: 120 }, { name: 'Mluvení', sec: 120 }];
+  const $ = (s) => document.querySelector(s);
+  const ring = $('[data-ring]');
+  const C = 2 * Math.PI * 54;
+  ring.style.strokeDasharray = String(C);
+
+  let cur = null, phase = 0, left = 0, timer = null, paused = false, wake = null;
+
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  async function keepAwake() { try { wake = await navigator.wakeLock?.request('screen'); } catch { /* volitelné */ } }
+
+  function draw() {
+    const skip = $('[data-skip-known]').checked;
+    const stav = store.get(STAV_KEY, {});
+    let pool = DATA.filter((d) => !skip || stav[d.id] !== 'umim');
+    if (cur && pool.length > 1) pool = pool.filter((d) => d.id !== cur.id);
+    if (!pool.length) pool = DATA;
+    cur = pool[Math.floor(Math.random() * pool.length)];
+    document.documentElement.dataset.epocha = cur.obdobi;
+    animateDraw().then(start);
+  }
+
+  function fillTicket() {
+    $('[data-t-num]').textContent = String(cur.cislo).padStart(2, '0');
+    $('[data-t-title]').textContent = cur.nazev;
+    $('[data-t-epocha]').textContent = cur.epocha;
+  }
+
+  function animateDraw() {
+    const cards = gsap.utils.toArray('.deck-card');
+    const ticket = $('[data-ticket]');
+    fillTicket();
+    ticket.hidden = false;
+    $('[data-panel="start"]').hidden = true;
+    if (calm) { gsap.set(cards, { opacity: 0 }); gsap.set(ticket, { opacity: 1, rotateY: 0, scale: 1 }); return Promise.resolve(); }
+    gsap.set(ticket, { opacity: 0, rotateY: 180, scale: 0.6 });
+    const vid = document.querySelector('[data-listek-video]');
+    if (vid) {
+      // animace z Higgsfieldu: ruka vytáhne lístek z katalogu → pak se ukáže číslo
+      gsap.set(cards, { opacity: 0 });
+      vid.hidden = false; vid.currentTime = 0; vid.playbackRate = 1.5;
+      return new Promise((done) => {
+        const finish = () => { vid.removeEventListener('ended', finish); clearTimeout(t); gsap.to(vid, { opacity: 0, duration: 0.4, onComplete: () => { vid.hidden = true; gsap.set(vid, { opacity: 1 }); } }); gsap.to(ticket, { opacity: 1, rotateY: 0, scale: 1, duration: 0.9, ease: 'expo.out', onComplete: done }); };
+        const t = setTimeout(finish, 3200);
+        vid.addEventListener('ended', finish);
+        vid.play().catch(finish);
+      });
+    }
+    const tl = gsap.timeline();
+    tl.set(cards, { opacity: 1 })
+      .to(cards, { x: () => gsap.utils.random(-150, 150), y: () => gsap.utils.random(-60, 60), rotate: () => gsap.utils.random(-28, 28), duration: 0.45, ease: 'power2.out', stagger: { each: 0.006, from: 'random' } })
+      .to(cards, { x: 0, y: 0, rotate: () => gsap.utils.random(-5, 5), duration: 0.4, ease: 'power2.inOut', stagger: { each: 0.006, from: 'random' } })
+      .to(cards, { y: 40, opacity: 0, duration: 0.35, ease: 'power2.in', stagger: 0.004 })
+      .to(ticket, { opacity: 1, rotateY: 0, scale: 1, duration: 0.9, ease: 'expo.out' }, '-=0.25');
+    return tl.then();
+  }
+
+  function renderOsnova() {
+    $('[data-osnova-list]').innerHTML = cur.osnova
+      .map((s) => `<li><b>${s.nadpis}</b>${s.pojmy.length ? `<span>${s.pojmy.join(' · ')}</span>` : ''}</li>`).join('');
+    $('[data-osnova-priklady]').innerHTML = cur.priklady.map((p) => `<li>${p}</li>`).join('');
+    $('[data-full]').href = cur.url;
+    $('[data-kviz]').href = cur.kviz;
+  }
+
+  function start() {
+    renderOsnova();
+    $('[data-osnova]').hidden = true;
+    $('[data-show-osnova]').setAttribute('aria-expanded', 'false');
+    $('[data-show-osnova]').textContent = 'Ukázat osnovu';
+    $('[data-done]').hidden = true;
+    $('[data-panel="run"]').hidden = false;
+    $('[data-stav-switch]').dataset.stavSwitch = cur.id;
+    renderStav();
+    phase = 0; setPhase();
+    keepAwake();
+  }
+
+  function setPhase() {
+    left = PHASES[phase].sec; paused = false;
+    $('[data-phase]').textContent = PHASES[phase].name;
+    $('[data-pause]').textContent = 'Pozastavit';
+    $('[data-skip]').innerHTML = phase === 0 ? 'Začít mluvit <span class="arr" aria-hidden="true">→</span>' : 'Ukončit';
+    document.querySelectorAll('[data-step]').forEach((s) => s.classList.toggle('on', Number(s.dataset.step) <= phase + 1));
+    clearInterval(timer);
+    tick();
+    timer = setInterval(() => { if (!paused) { left--; tick(); } }, 1000);
+  }
+
+  function tick() {
+    $('[data-time]').textContent = fmt(Math.max(0, left));
+    ring.style.strokeDashoffset = String(C * (1 - left / PHASES[phase].sec));
+    $('[data-timer]').classList.toggle('warn', left <= 15);
+    if (left <= 0) next();
+  }
+
+  function next() {
+    try { navigator.vibrate?.(200); } catch { /* */ }
+    if (phase === 0) { phase = 1; setPhase(); return; }
+    clearInterval(timer);
+    $('[data-phase]').textContent = 'Hotovo';
+    $('[data-time]').textContent = '0:00';
+    $('[data-done]').hidden = false;
+    wake?.release?.();
+  }
+
+  $('[data-draw]').addEventListener('click', draw);
+  $('[data-redraw]').addEventListener('click', () => { clearInterval(timer); draw(); });
+  $('[data-pause]').addEventListener('click', (e) => { paused = !paused; e.currentTarget.textContent = paused ? 'Pokračovat' : 'Pozastavit'; });
+  $('[data-skip]').addEventListener('click', () => { left = 0; tick(); });
+  $('[data-show-osnova]').addEventListener('click', (e) => {
+    const o = $('[data-osnova]');
+    o.hidden = !o.hidden;
+    e.currentTarget.setAttribute('aria-expanded', String(!o.hidden));
+    e.currentTarget.textContent = o.hidden ? 'Ukázat osnovu' : 'Skrýt osnovu';
+  });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && timer) keepAwake(); });
+</script>

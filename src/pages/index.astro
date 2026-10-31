@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro';
+import Obraz from '../components/Obraz.astro';
+import { epochy, otazky, url, otazkaUrl, katCislo, epochaIndex, videoUrl } from '../lib/data.js';
+
+// galerijní stěna: promíchané pořadí, stabilní mezi buildy
+const wall = [...otazky].sort((a, b) => ((a.cislo * 7) % 30) - ((b.cislo * 7) % 30));
+const pocetPrikladu = otazky.reduce((a, o) => a + o.priklady.length, 0);
+---
+<Base epocha="pravek-starovek" bodyClass="page-home">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-wall" aria-hidden="true" data-wall>
+      {wall.map((o, i) => (
+        <div class="tile" data-tile>
+          <Obraz otazka={o} sizes="(max-width: 640px) 30vw, 17vw" eager={i < 12} priority="low" lqip={false} alt="" />
+        </div>
+      ))}
+    </div>
+    <div class="wrap hero-inner">
+      <p class="eyebrow" data-hero-in>Profilová maturita · 2026/27 · <span class="acc">Kat. č. 01–30</span></p>
+      <h1 id="hero-title" data-hero-in>Dějiny<br /> výtvarné <em>kultury</em></h1>
+      <p class="hero-sub" data-hero-in>
+        {otazky.length} maturitních otázek od jeskynních maleb po současné umění. Každou projdeš zhruba za dvě minuty.
+      </p>
+      <div class="hero-actions" data-hero-in>
+        <a class="btn btn-primary" href={otazkaUrl(otazky[0])}>Začít od pravěku <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn" href={url('/prehled/')} data-random>Náhodná otázka <span class="arr" aria-hidden="true">↻</span></a>
+        <a class="btn" href={url('/zkouseni/')}>Režim zkoušení <span class="arr" aria-hidden="true">⏱</span></a>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="stats" data-reveal>
+      <div><b>{otazky.length}</b><span class="eyebrow">otázek</span></div>
+      <div><b>{epochy.length}</b><span class="eyebrow">epoch</span></div>
+      <div><b>{pocetPrikladu}</b><span class="eyebrow">děl k zapamatování</span></div>
+    </div>
+  </div>
+
+  <section class="osa" id="osa" aria-labelledby="osa-title" data-osa>
+    <div class="wrap osa-head">
+      <div>
+        <p class="eyebrow">Časová osa</p>
+        <h2 id="osa-title">Od pravěku po&nbsp;současnost</h2>
+      </div>
+      <div class="osa-legend" aria-hidden="true">
+        {epochy.map((e) => (
+          <span style={`--n:${e.do - e.od + 1};--c:var(--${e.barva})`} data-legend={e.id}></span>
+        ))}
+      </div>
+    </div>
+    <div class="osa-pin" data-osa-pin>
+      {epochy.some((e, i) => videoUrl(`epocha-${i + 1}`)) && (
+        <div class="osa-video" aria-hidden="true">
+          {epochy.map((e, i) => videoUrl(`epocha-${i + 1}`) && (
+            <video data-osa-video={e.id} src={videoUrl(`epocha-${i + 1}`)} muted loop playsinline preload="none"></video>
+          ))}
+        </div>
+      )}
+      <div class="osa-track wrap" data-osa-track>
+        {epochy.map((e) => (
+          <section class="epocha" style={`--c:var(--${e.barva})`} data-epocha-section={e.id} aria-labelledby={`ep-${e.id}`}>
+            <header class="epocha-head">
+              <span class="num">{String(epochaIndex(e.id)).padStart(2, '0')} · otázky {e.od}–{e.do}</span>
+              <h3 id={`ep-${e.id}`}>{e.nazev}</h3>
+              <p class="eyebrow">{e.obdobi}</p>
+            </header>
+            <ol class="epocha-items">
+              {otazky.filter((o) => o.obdobi === e.id).map((o) => (
+                <li class="osa-item">
+                  <a class="osa-card" href={otazkaUrl(o)}>
+                    <Obraz otazka={o} sizes="(min-width: 960px) 260px, 112px" alt="" />
+                    <span>
+                      <span class="meta">
+                        <span class="kat">Kat. č. {katCislo(o.cislo)}</span>
+                        <span class="stav-dot" data-stav-dot={o.id} aria-hidden="true"></span>
+                      </span>
+                      <h4>{o.kratkyNazev}</h4>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script define:vars={{ urls: otazky.map((o) => otazkaUrl(o)) }}>
+  document.querySelectorAll('[data-random]').forEach((a) =>
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      location.href = urls[Math.floor(Math.random() * urls.length)];
+    }),
+  );
+</script>
